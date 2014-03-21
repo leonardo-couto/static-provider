@@ -11,6 +11,21 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
+  <scm>
+    <connection>scm:git:ssh://git@github.com/leonardo-dextra/static-provider.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/leonardo-dextra/static-provider.git</developerConnection>
+    <url>https://github.com/leonardo-dextra/static-provider</url>
+    <tag>HEAD</tag>
+  </scm>
+
+  <distributionManagement>
+    <repository>
+      <id>dextra-public-release</id>
+      <name>Dextra Public Releases</name>
+      <url>https://dextranet.dextra.com.br/nexus/content/repositories/dextra-public-release/</url>
+    </repository>
+  </distributionManagement>
+
   <dependencies>
 
     <dependency>
