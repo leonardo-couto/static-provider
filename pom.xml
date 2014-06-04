@@ -4,7 +4,7 @@
   <groupId>br.com.dextra.rest</groupId>
   <artifactId>static-provider</artifactId>
   <packaging>jar</packaging>
-  <version>0.1.2</version>
+  <version>0.1.3-SNAPSHOT</version>
   <name>Static File Provider</name>
 
   <properties>
@@ -15,7 +15,7 @@
     <connection>scm:git:ssh://git@github.com/leonardo-dextra/static-provider.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/leonardo-dextra/static-provider.git</developerConnection>
     <url>https://github.com/leonardo-dextra/static-provider</url>
-    <tag>static-provider-0.1.2</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <distributionManagement>
