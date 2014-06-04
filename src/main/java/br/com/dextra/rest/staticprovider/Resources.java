@@ -20,6 +20,9 @@ import javax.ws.rs.core.Response.ResponseBuilder;
 public class Resources {
 
     private String basePath = ServerProperties.property("source.path");
+    private String sourceJs = ServerProperties.property("javascript.source.path");
+    private String targetJs = ServerProperties.property("javascript.target.path");
+    private boolean redirectJs = (!sourceJs.isEmpty() && !targetJs.isEmpty());
 
     @GET
     @Path("{path:.*}")
@@ -29,7 +32,14 @@ public class Resources {
             return (location == null) ? this.send404() : Response.seeOther(location).build();
         }
         
-        File f = new File(basePath + "/" + path);
+        File f = null;
+        if (this.redirectJs && path.startsWith(targetJs)) {
+        	String jsPath = path.substring(targetJs.length() + 1);
+        	f = new File(this.sourceJs + "/" + jsPath);
+        	
+        } else {
+        	f = new File(this.basePath + "/" + path);
+        }
 
         if (f == null || !f.exists() || !f.isFile()) {
             return this.send404();
