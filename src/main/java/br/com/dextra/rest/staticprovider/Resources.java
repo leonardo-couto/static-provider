@@ -1,6 +1,7 @@
 package br.com.dextra.rest.staticprovider;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -10,31 +11,42 @@ import java.nio.file.Files;
 import java.util.Iterator;
 
 import javax.activation.MimetypesFileTypeMap;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
-@Path("")
-public class Resources {
+@WebServlet("/")
+public class Resources extends HttpServlet {
 
-    private String basePath = ServerProperties.property("source.path");
+	private static final long serialVersionUID = -3695914304133163599L;
+	private String basePath = ServerProperties.property("source.path");
     private String sourceJs = ServerProperties.property("javascript.source.path");
     private String targetJs = ServerProperties.property("javascript.target.path");
     private boolean redirectJs = (!sourceJs.isEmpty() && !targetJs.isEmpty());
 
-    @GET
-    @Path("{path:.*}")
-    public Response doGet(@PathParam("path") String path) {
-        if (path == null || path.isEmpty()) {
+
+    @Override
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    	
+    	String path = req.getServletPath();
+    	
+        if (path == null || path.isEmpty() || "/".equals(path)) {
             URI location = this.index();
-            return (location == null) ? this.send404() : Response.seeOther(location).build();
+            if (location == null) {
+            	resp.sendError(404);
+            } else {
+            	resp.sendRedirect(location.toString());
+            }
+            
+            return;
         }
         
         File f = null;
-        if (this.redirectJs && path.startsWith(targetJs)) {
-        	String jsPath = path.substring(targetJs.length() + 1);
+        if (this.redirectJs && path.startsWith("/" + targetJs)) {
+        	String jsPath = path.substring(targetJs.length() + 2);
         	f = new File(this.sourceJs + "/" + jsPath);
         	
         } else {
@@ -42,13 +54,29 @@ public class Resources {
         }
 
         if (f == null || !f.exists() || !f.isFile()) {
-            return this.send404();
+        	resp.sendError(404);
+        	return;
         }
 
         String mime = this.getContentType(f);
-        return Response.ok(f, mime).build();
-    }
-
+        
+        resp.setContentType(mime);
+        resp.setStatus(200);
+        ServletOutputStream os = resp.getOutputStream();
+        
+        FileInputStream fileInput = new FileInputStream(f);
+        byte[] buffer = new byte[10240];
+        
+        int read = fileInput.read(buffer);
+        while (read > -1) {
+        	os.write(buffer, 0, read);
+        	read = fileInput.read(buffer);
+        }
+        
+        fileInput.close();
+        resp.flushBuffer();
+	}
+    
     /**
      * @return the name of the first index file found on webapp root directory
      */
@@ -72,12 +100,6 @@ public class Resources {
         return null;
     }
 
-    private Response send404() {
-        File f = new File(basePath + "/404.html");
-        ResponseBuilder response = Response.status(Response.Status.NOT_FOUND);
-        return f.isFile() ? response.entity(f).build() : response.build();
-    }
-
     private String getContentType(File f) {
         String contentType = null;
         try {
@@ -89,5 +111,10 @@ public class Resources {
         String mime = contentType == null ? (new MimetypesFileTypeMap()).getContentType(f) : contentType;
         return mime;
     }
+    
+    @Override
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+		this.doGet(req, resp);
+	}
 
 }
