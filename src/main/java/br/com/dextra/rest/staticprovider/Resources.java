@@ -102,6 +102,10 @@ public class Resources extends HttpServlet {
 
     private String getContentType(File f) {
         String contentType = null;
+        if (hasFileExtension(f, "css")) {
+        	return "text/css";
+        }
+        
         try {
             contentType = Files.probeContentType(f.toPath());
         } catch (IOException e) {
@@ -110,6 +114,10 @@ public class Resources extends HttpServlet {
 
         String mime = contentType == null ? (new MimetypesFileTypeMap()).getContentType(f) : contentType;
         return mime;
+    }
+    
+    private boolean hasFileExtension(File f, String extension) {
+    	return f.getPath().endsWith(extension);
     }
     
     @Override
