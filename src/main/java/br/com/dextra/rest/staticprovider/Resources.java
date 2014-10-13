@@ -9,6 +9,7 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.util.Iterator;
+import java.util.List;
 
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.ServletException;
@@ -23,11 +24,7 @@ public class Resources extends HttpServlet {
 
 	private static final long serialVersionUID = -3695914304133163599L;
 	private String basePath = ServerProperties.property("source.path");
-    private String sourceJs = ServerProperties.property("javascript.source.path");
-    private String targetJs = ServerProperties.property("javascript.target.path");
-    private boolean redirectJs = (!sourceJs.isEmpty() && !targetJs.isEmpty());
-
-
+	
     @Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
     	
@@ -44,15 +41,7 @@ public class Resources extends HttpServlet {
             return;
         }
         
-        File f = null;
-        if (this.redirectJs && path.startsWith("/" + targetJs)) {
-        	String jsPath = path.substring(targetJs.length() + 2);
-        	f = new File(this.sourceJs + "/" + jsPath);
-        	
-        } else {
-        	f = new File(this.basePath + "/" + path);
-        }
-
+        File f = this.extractFile(path);
         if (f == null || !f.exists() || !f.isFile()) {
         	resp.sendError(404);
         	return;
@@ -75,6 +64,23 @@ public class Resources extends HttpServlet {
         
         fileInput.close();
         resp.flushBuffer();
+	}
+
+	private File extractFile(String path) {
+        List<Redirect> redirects = ServerProperties.redirects();
+        
+        for (Redirect redirect : redirects) {
+        	String target = redirect.getTarget();
+        	String source = redirect.getSource();
+        	
+            if (path.startsWith("/" + target)) {
+            	String jsPath = path.substring(target.length() + 2);
+            	return new File(source + "/" + jsPath);
+            }
+            
+        }
+	
+        return new File(this.basePath + "/" + path);
 	}
     
     /**
